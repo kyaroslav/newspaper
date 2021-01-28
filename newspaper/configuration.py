@@ -14,7 +14,7 @@ import logging
 
 from .parsers import Parser
 from .text import (StopWords, StopWordsArabic, StopWordsChinese,
-                   StopWordsKorean, StopWordsHindi, StopWordsJapanese, StopWordsThai)
+                   StopWordsKorean, StopWordsHindi, StopWordsJapanese, StopWordsThai, StopPhrases)
 from .version import __version__
 
 log = logging.getLogger(__name__)

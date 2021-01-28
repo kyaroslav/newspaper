@@ -58,6 +58,7 @@ class ContentExtractor(object):
         self.parser = self.config.get_parser()
         self.language = config.language
         self.stopwords_class = config.stopwords_class
+        self.stopphrases_class = config.stopphrases_class
 
     def update_language(self, meta_lang):
         """Required to be called before the extraction process in some
@@ -784,7 +785,14 @@ class ContentExtractor(object):
             word_stats = self.stopwords_class(language=self.language). \
                 get_stopword_count(text_node)
             high_link_density = self.is_highlink_density(node)
-            if word_stats.get_stopword_count() > 2 and not high_link_density:
+
+            downword_stats = self.stopphrases_class(language=self.language). \
+                get_stopphrases_count(text_node)
+            downscore = int(downword_stats.get_stopword_count())
+
+            if word_stats.get_stopword_count() > 2 and \
+                    not high_link_density and \
+                    not downscore >= 1:
                 nodes_with_text.append(node)
 
         nodes_number = len(nodes_with_text)
@@ -812,6 +820,14 @@ class ContentExtractor(object):
             word_stats = self.stopwords_class(language=self.language). \
                 get_stopword_count(text_node)
             upscore = int(word_stats.get_stopword_count() + boost_score)
+
+            downword_stats = self.stopphrases_class(language=self.language). \
+                get_stopphrases_count(text_node)
+            downscore = int(downword_stats.get_stopword_count())
+
+            # block text block if it contains blocked text (pp text or subscribe or GDPR etc.)
+            if downscore > 0:
+                upscore = 0.5
 
             parent_node = self.parser.getParent(node)
             self.update_score(parent_node, upscore)

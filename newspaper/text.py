@@ -101,6 +101,56 @@ class StopWords(object):
         return ws
 
 
+class StopPhrases(object):
+
+    TRANS_TABLE = str.maketrans('', '')
+    _cached_stop_phrases = {}
+
+    def __init__(self, language='en'):
+        if language not in self._cached_stop_phrases:
+            path = os.path.join('text', 'stopphrases-%s.txt' % language)
+            if not os.path.isabs(path):
+                dirpath = os.path.abspath(os.path.dirname(__file__))
+                path = os.path.join(dirpath, 'resources', path)
+            if os.path.isfile(path):
+                self._cached_stop_phrases[language] = \
+                    set(FileHelper.loadResourceFile(path).splitlines())
+            else:
+                self._cached_stop_phrases[language] = {}
+        self.STOP_PHRASES = self._cached_stop_phrases[language]
+
+    def remove_punctuation(self, content):
+        # code taken form
+        # http://stackoverflow.com/questions/265960/best-way-to-strip-punctuation-from-a-string-in-python
+        content_is_unicode = isinstance(content, str)
+        if content_is_unicode:
+            content = content.encode('utf-8')
+        trans_table = {ord(c): None for c in string.punctuation}
+        stripped_input = content.decode('utf-8').translate(trans_table)
+
+        return stripped_input
+
+    def candidate_words(self, stripped_input):
+        return stripped_input.split(' ')
+
+    def get_stopphrases_count(self, content):
+        if not content:
+            return WordStats()
+        ws = WordStats()
+        stripped_input = self.remove_punctuation(content)
+        #candidate_words = self.candidate_words(stripped_input.lower())
+        candidate_input = stripped_input.lower()
+        overlapping_stopwords = []
+
+        for w in self.STOP_PHRASES:
+            if w in candidate_input:
+                overlapping_stopwords.append(w)
+
+        ws.set_word_count(0)
+        ws.set_stopword_count(len(overlapping_stopwords))
+        ws.set_stop_words(overlapping_stopwords)
+        return ws
+
 class StopWordsChinese(StopWords):
     """Chinese segmentation
     """
